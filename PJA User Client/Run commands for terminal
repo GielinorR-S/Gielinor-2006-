@@ -1,0 +1,22 @@
+
+cd "PJA User Client"
+
+Run in Cursor terminal:
+
+javac -cp src -d bin src/*.java
+
+
+⚠️ If it errors:
+
+Paste the first error only
+
+Don’t scroll spam
+
+STEP 6 — Run the client
+java -cp bin client
+    
+COMPILE WITH ANT
+cd "Project Annihilation"
+ant clean
+ant build
+ant run
