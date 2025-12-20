@@ -1,9 +1,7 @@
-================================================================================
 GIELINOR - RSPS STACK ANALYSIS & COMMAND REFERENCE
-================================================================================
 
 Generated: Analysis of RSPS Stack and Complete Command List from CommandPacketHandler.java
-================================================================================
+
 Terminal Commands, to build the client and run it
 [CLEINT]
 cd "Gielinor Client"
@@ -16,9 +14,9 @@ cd "Gielinor"
 ant clean
 ant build
 ant run
-================================================================================
+
 RSPS STACK ANALYSIS
-================================================================================
+
 
 BASE FRAMEWORK:
 --------------
