@@ -50,3 +50,7 @@ savedGames/
 data/configuration.cfg
 data/bannedUsers.txt
 
+# Subversion files
+.svn/
+**/.svn/
+
