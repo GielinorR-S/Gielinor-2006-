@@ -94,8 +94,12 @@ public class DialogueLoader {
 			}
 			return;
 		}
-		Dialogue dialogue = dl.getDialouges()[nextDialogueId];
-		assert(dialogue != null);
+		Dialogue dialogue = dl.getDialogueById(nextDialogueId);
+		if(dialogue == null) {
+			logger.warning("Dialogue id "+nextDialogueId+" not found for npc "+dl.getNpcId());
+			player.getActionSender().sendCloseInterface();
+			return;
+		}
 		switch (dialogue.getType()) {
 		case OPTION:
 			options(player, dialogue.getLines());
@@ -175,13 +179,13 @@ public class DialogueLoader {
 			case 1552:
 				int total = player.getSkills().getTotalLevel();
 				if(total >= 300) {
-					Dialogue d = dl.getDialouges()[5];
+					Dialogue d = dl.getDialogueById(5);
 					dialogue(player, new NPC(NPCDefinition.forId(dl.npcId)), d.getEmotion(), d.getLines());
 					player.setNextDialogueIds(new int[]{-1});
 					player.getInventory().add(new Item(962));
 					player.setHasRecievedHolidayItems(true); 
 				} else {
-					Dialogue d = dl.getDialouges()[4];
+					Dialogue d = dl.getDialogueById(4);
 					dialogue(player, new NPC(NPCDefinition.forId(dl.npcId)), d.getEmotion(), d.getLines());
 					player.setNextDialogueIds(new int[]{-1});
 				}
@@ -244,6 +248,18 @@ public class DialogueLoader {
 
 	public Dialogue[] getDialouges() {
 		return dialouges;
+	}
+
+	public Dialogue getDialogueById(int id) {
+		if(dialouges == null) {
+			return null;
+		}
+		for(Dialogue dialogue : dialouges) {
+			if(dialogue != null && dialogue.getId() == id) {
+				return dialogue;
+			}
+		}
+		return null;
 	}
 
 	public int getQuestId() {

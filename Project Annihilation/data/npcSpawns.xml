@@ -1,23 +1,4 @@
 <list>
-	<npcSpawn> <!--HELLHOUND AT DRAYNOR WIZ TOWER SOUTH BRIDGE DOG  - QUEST NPC-->
-	  <npcId>49</npcId> <!--The npc id to spawn.-->
-	  <walkingType>0</walkingType> <!--The walking type-->
-	  <spawnLocation> <!--The location to spawn the NPC.-->
-		<x>3224</x>
-		<y>3254</y>
-		<z>0</z>
-	  </spawnLocation>
-	  <minLocation> <!--The lowest location you can walk into..-->
-		<x>3224</x>
-		<y>3254</y>
-		<z>0</z>
-	  </minLocation>
-	  <maxLocation> <!--The highest location you can walk into..-->
-		<x>3224</x>
-		<y>3254</y>
-		<z>0</z>
-	  </maxLocation>
-	</npcSpawn>
 	<npcSpawn> <!--TRAIBORN - QUEST NPC-->
 	  <npcId>881</npcId> <!--The npc id to spawn.-->
 	  <walkingType>2</walkingType> <!--The walking type-->
@@ -33,6 +14,25 @@
 	  </minLocation>
 	  <maxLocation> <!--The highest location you can walk into..-->
 		<x>3225</x>
+		<y>3254</y>
+		<z>0</z>
+	  </maxLocation>
+	</npcSpawn>
+	<npcSpawn> <!--BANKER AT TRAIBORN'S LOCATION-->
+	  <npcId>494</npcId> <!--The npc id to spawn.-->
+	  <walkingType>0</walkingType> <!--The walking type-->
+	  <spawnLocation> <!--The location to spawn the NPC.-->
+		<x>3226</x>
+		<y>3254</y>
+		<z>0</z>
+	  </spawnLocation>
+	  <minLocation> <!--The lowest location you can walk into..-->
+		<x>3226</x>
+		<y>3254</y>
+		<z>0</z>
+	  </minLocation>
+	  <maxLocation> <!--The highest location you can walk into..-->
+		<x>3226</x>
 		<y>3254</y>
 		<z>0</z>
 	  </maxLocation>

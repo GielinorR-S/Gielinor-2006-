@@ -7,6 +7,7 @@ import org.hyperion.rs2.Constants;
 import org.hyperion.rs2.content.Dialogue;
 import org.hyperion.rs2.content.DialogueLoader;
 import org.hyperion.rs2.content.quest.impl.*;
+import org.hyperion.rs2.content.quest.impl.TraibornRequest;
 import org.hyperion.rs2.model.Player;
 
 public class QuestHandler {
@@ -20,8 +21,46 @@ public class QuestHandler {
 	public static int configIds[] = { 130, 29, 222, 31, 176, 32, 62, 160, 122, 71, 273, 107, 144, 63, 179, 146, 178, 67 };
 	public static int configCompleteValues[] = { 4, 2, 3, 100, 10, 3, 6, 2, 7, 4, 110, 5, 100, 6, 21, 4, 3, 3};
 	
-	public static void sendQuestInterface(Player player, int questId) {
-		Quest quest = getQuest(questId);
+	public static void sendQuestInterface(Player player, int buttonId) {
+		// Cache-specific mapping: in this client, the Cook's Assistant slot is sent as buttonId 15.
+		// We replace Cook's Assistant with Traiborn's Request (Quest/Config 29), which is configIds index 1.
+		if(buttonId == 15) {
+			buttonId = 1;
+		}
+
+		// Best-effort: keep the quest tab entry name in sync for this button.
+		// If the buttonId is also the childId for the quest entry in interface 274 (common on this base),
+		// this will rename the line immediately.
+		if(buttonId == 15) {
+			player.getActionSender().sendString("Traiborn's Request", 274, 15);
+		}
+
+		// Map button ID to quest ID
+		// The button ID is the index in the configIds array
+		// configIds array: { 130, 29, 222, 31, 176, 32, 62, 160, 122, 71, 273, 107, 144, 63, 179, 146, 178, 67 }
+		// Index 1 = config ID 29 = Cook's Assistant = Quest ID 29
+		Quest quest = null;
+		int actualQuestId = -1;
+		
+		// If buttonId is an index in configIds array, get the config ID
+		if(buttonId >= 0 && buttonId < configIds.length) {
+			int configId = configIds[buttonId];
+			// Find quest by config ID
+			for(Map.Entry<Integer, Quest> entry : getQuests().entrySet()) {
+				if(entry.getValue().getConfigId() == configId) {
+					quest = entry.getValue();
+					actualQuestId = entry.getKey();
+					break;
+				}
+			}
+		} else {
+			// Try to find quest by quest ID directly
+			quest = getQuest(buttonId);
+			if(quest != null) {
+				actualQuestId = buttonId;
+			}
+		}
+		
 		String name;
 		String[] lines;
 		if (quest == null) {
@@ -67,6 +106,10 @@ public class QuestHandler {
 			player.getActionSender().sendConfig(quest.getConfigId(), quest.isFinished(player) ? quest.getConfigValue() : quest.isStarted(player) ? 1 : 0);
 		}
 		player.getActionSender().sendConfig(101, player.getQuestPoints());
+		// Cosmetic override: rename Cook's Assistant slot (config 29) to Traiborn's Request in the quest tab list.
+		// On this server, quest tab clicks come in on interface 274; the childId used by the client varies by cache,
+		// so we also update on-click in sendQuestInterface (see below).
+		player.getActionSender().sendString("Traiborn's Request", 274, 15);
 	}
 								
 	public static Map<Integer, Quest> getQuests() {
@@ -78,6 +121,7 @@ public class QuestHandler {
 		quests.put(14, new BlackKnightsFortress());
 		quests.put(83, new LostCity());
 		quests.put(34, new BetweenARock());
+		quests.put(29, new TraibornRequest()); // Traiborn's Request (replaces Cook's Assistant)
 	}
 	
 	public static boolean isQuestEquipItem(Player player, int wearId) {

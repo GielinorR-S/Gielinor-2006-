@@ -63,6 +63,8 @@ import org.hyperion.rs2.model.npc.fightcaves.TzKid;
  *
  */
 public class Player extends Entity implements Persistable {
+
+	private static final int SAVE_EXT_MARKER = 0x5452; // 'TR' (TraibornRequest extension marker)
 	
 	/**
 	 * Represents the rights of a player.
@@ -951,6 +953,30 @@ public class Player extends Entity implements Persistable {
 			construction.getHouse().addRoom(room);
 		}
 		hasRecievedHolidayItems = buf.get() == 1;
+
+		// Optional save extensions (append-only, backwards compatible).
+		if(buf.remaining() >= 2) {
+			int pos = buf.position();
+			int marker = buf.getUnsignedShort();
+			if(marker == SAVE_EXT_MARKER) {
+				// versioned extension payload
+				if(buf.remaining() >= 1) {
+					int ver = buf.getUnsigned() & 0xFF;
+					switch(ver) {
+					case 1:
+						if(buf.remaining() >= 1) {
+							traibornQuestStage = buf.getUnsigned();
+						}
+						break;
+					default:
+						break;
+					}
+				}
+			} else {
+				// Not our marker; rewind so legacy "remainder" drain keeps behavior stable.
+				buf.position(pos);
+			}
+		}
 		while(buf.hasRemaining()) {
 			System.out.println("WARNING: Didnt read the entire player buffer!");
 			buf.get();
@@ -1018,8 +1044,14 @@ public class Player extends Entity implements Persistable {
 		buf.put((byte) skullVariables[1]);
 		buf.put((byte) skullVariables[2]);
 		FarmingObject[] list = farmingList.getArray();
-		buf.putShort((short) list.length);
+		List<FarmingObject> nonNullFarming = new ArrayList<FarmingObject>();
 		for(FarmingObject fo : list) {
+			if(fo != null) {
+				nonNullFarming.add(fo);
+			}
+		}
+		buf.putShort((short) nonNullFarming.size());
+		for(FarmingObject fo : nonNullFarming) {
 			buf.putShort((short) fo.getLocation().getX());
 			buf.putShort((short) fo.getLocation().getY());
 			//No need to do height, they're all at height 0.
@@ -1086,6 +1118,19 @@ public class Player extends Entity implements Persistable {
 			}
 		}
 		buf.put((byte) (hasRecievedHolidayItems ? 1 : 0));
+
+		// Optional save extensions (append-only, backwards compatible).
+		buf.putShort((short) SAVE_EXT_MARKER);
+		buf.put((byte) 1); // extension version
+		buf.put((byte) traibornQuestStage);
+	}
+
+	public int getTraibornQuestStage() {
+		return traibornQuestStage;
+	}
+
+	public void setTraibornQuestStage(int stage) {
+		this.traibornQuestStage = stage;
 	}
 
 	@Override
@@ -1169,6 +1214,11 @@ public class Player extends Entity implements Persistable {
 		{0},//Monkey Madness..
 		{0},//Between a Rock. 
 	};
+	
+	/**
+	 * Traiborn's Request quest stage (Quest ID 29). Persisted via save extension.
+	 */
+	private int traibornQuestStage = 0;
 	
 	/**
 	 * Gets the players quest points.

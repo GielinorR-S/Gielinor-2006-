@@ -20,6 +20,17 @@ public class WalkingPacketHandler implements PacketHandler {
 		if(!player.canWalk()) {
 			return;
 		}
+		// Optional live position debug (throttled).
+		Object posDebug = player.getTemporaryAttribute("posDebug");
+		if(posDebug != null && (Boolean) posDebug) {
+			long now = System.currentTimeMillis();
+			Object lastObj = player.getTemporaryAttribute("posDebugLast");
+			long last = lastObj instanceof Long ? (Long) lastObj : 0L;
+			if(now - last >= 1000) {
+				player.setTemporaryAttribute("posDebugLast", now);
+				player.getActionSender().sendMessage(player.getLocation().toString());
+			}
+		}
 		int size = packet.getLength();
 		if(packet.getOpcode() == 191) {
 		    size -= 14;

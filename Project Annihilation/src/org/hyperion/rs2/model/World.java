@@ -19,6 +19,7 @@ import org.hyperion.rs2.content.BannedUsers;
 import org.hyperion.rs2.content.DialogueLoader;
 import org.hyperion.rs2.content.Shop;
 import org.hyperion.rs2.content.skills.construction.Construction;
+import org.hyperion.rs2.content.GlobalObjectManager;
 import org.hyperion.rs2.content.traveling.DoorManager;
 import org.hyperion.rs2.event.Event;
 import org.hyperion.rs2.event.EventManager;
@@ -187,6 +188,19 @@ public class World {
 			@Override
 			public Object call() throws Exception {
 				Construction.loadHotspots();
+				return null;
+			}
+		});
+		backgroundLoader.submit(new Callable<Object>() {
+			@Override
+			public Object call() throws Exception {
+				// Wait for object manager to load first
+				try {
+					Thread.sleep(2000); // Give object manager time to initialize
+				} catch (InterruptedException e) {
+					// Ignore
+				}
+				org.hyperion.rs2.content.quest.impl.TraibornRequest.spawnAltars();
 				return null;
 			}
 		});
@@ -418,6 +432,8 @@ public class World {
 					player.getSession().close(false);
 				} else {
 					player.getActionSender().sendLogin();
+					// Send any global objects (e.g., quest reward spawns) to the player on login.
+					GlobalObjectManager.getInstance().refresh(player);
 				}
 			}
 		});

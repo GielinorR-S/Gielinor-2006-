@@ -96,8 +96,13 @@ public class TutorialIsland implements Quest {
 			player.getActionSender().sendSidebarInterface(11, 261);
 			player.getActionSender().sendFlashingTab(11);
 			player.setCurrentDialogueLoader(dialogueLoader);
-			dialogue = dialogueLoader.getDialouges()[6]; //We play dialogue number 6.
-			player.setNextDialogueIds(new int[]{-1}); //We set the next dialogue to nothing...
+			dialogue = dialogueLoader.getDialogueById(6); //We play dialogue number 6.
+			if(dialogue != null) {
+				player.setNextDialogueIds(new int[]{-1}); //We set the next dialogue to nothing...
+			} else {
+				player.getActionSender().sendCloseInterface();
+				return;
+			}
 			break;
 		/*
 		 * Survival expert

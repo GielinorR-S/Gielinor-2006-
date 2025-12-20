@@ -67,8 +67,13 @@ public class DesertTreasure implements Quest {
 		switch(nextDialogueId) { //CAREFULL!!!! THIS WAS RIPPED FROM THE BLACK KNIGHTS FORTRESS XD
 		case 7://We just accepted the quest.
 			player.editQuestInfo(QUEST_INFO_INDEX, QUEST_STAGE_INDEX, 1); //Hopefully the stage is currently 0, and we set it to 1.
-			dialogue = dialogueLoader.getDialouges()[8]; //We play dialogue number 8.
-			player.setNextDialogueIds(new int[]{9}); //We set the next dialogue to 9.
+			dialogue = dialogueLoader.getDialogueById(8); //We play dialogue number 8.
+			if(dialogue != null) {
+				player.setNextDialogueIds(new int[]{9}); //We set the next dialogue to 9.
+			} else {
+				player.getActionSender().sendCloseInterface();
+				return;
+			}
 			break;
 		}
 		DialogueLoader.dialogue(player, dialogue.getType() == Type.PLAYER ? player : new NPC(NPCDefinition.forId(dialogueLoader.getNpcId())), dialogue.getEmotion(), dialogue.getLines());

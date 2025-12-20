@@ -27,6 +27,7 @@ import org.hyperion.rs2.model.GameObjectDefinition;
 import org.hyperion.rs2.model.GroundItemController;
 import org.hyperion.rs2.model.Item;
 import org.hyperion.rs2.model.Location;
+import org.hyperion.rs2.model.NPC;
 import org.hyperion.rs2.model.Player;
 import org.hyperion.rs2.model.World;
 import org.hyperion.rs2.model.container.Inventory;
@@ -42,6 +43,7 @@ public class ItemPacketHandler implements PacketHandler {
 	private static final int PICKUP_ITEM = 238;
 	private static final int ITEM_RUBBING = 11;
 	private static final int ITEM_ON_PLAYER = 30;
+	private static final int ITEM_ON_NPC = 57;
 	
 	@Override
 	public void handle(Player player, Packet packet) {
@@ -73,6 +75,9 @@ public class ItemPacketHandler implements PacketHandler {
 			break;
 		case ITEM_ON_PLAYER:
 			handleItemOnPlayer(player, packet);
+			break;
+		case ITEM_ON_NPC:
+			handleItemOnNPC(player, packet);
 			break;
 		}
 
@@ -396,6 +401,118 @@ public class ItemPacketHandler implements PacketHandler {
 			}
 			break;
 		}
+	}
+	
+	private void handleItemOnNPC(Player player, Packet packet) {
+		try {
+			// 459 "item on npc" packets are notoriously easy to mis-decode due to endian/A variants.
+			// Payload is 6 bytes (3 shorts). We'll try a few common decode patterns and pick the first valid one.
+			final int[] decoded = decodeItemOnNpc(packet, player);
+			if(decoded == null) {
+				return;
+			}
+			final int itemId = decoded[0];
+			final int npcIndex = decoded[1];
+			final int itemSlot = decoded[2];
+			
+			final NPC npc = (NPC) World.getWorld().getNPCs().get(npcIndex);
+			if(npc == null) {
+				return;
+			}
+			
+			final Item item = player.getInventory().get(itemSlot);
+			if(item == null || item.getId() != itemId) {
+				return;
+			}
+			
+			// Handle Traiborn quest - feathers on Traiborn
+			if(itemId == 314 && npc.getDefinition().getId() == 881) { // Feathers on Traiborn
+				org.hyperion.rs2.content.quest.impl.TraibornRequest.handleFeathersOnTraiborn(player, npc);
+				return;
+			}
+		} catch (Exception e) {
+			System.out.println("Error handling item on NPC: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+	private int[] decodeItemOnNpc(Packet packet, Player player) {
+		final org.apache.mina.core.buffer.IoBuffer original = packet.getPayload();
+		if(original == null) {
+			return null;
+		}
+		// Try several decoding strategies. Each returns {itemId, npcIndex, itemSlot}.
+		final int[][] tries = new int[][] {
+			tryDecode(original, 0), // LEShortA, LEShort, LEShortA (current assumption)
+			tryDecode(original, 1), // ShortA, LEShort, ShortA
+			tryDecode(original, 2), // LEShort, LEShort, LEShort
+			tryDecode(original, 3), // Short, LEShort, Short
+		};
+		for(int[] t : tries) {
+			if(t == null) continue;
+			int itemId = t[0], npcIndex = t[1], itemSlot = t[2];
+			if(npcIndex < 0 || npcIndex >= Constants.MAX_NPCS) continue;
+			if(itemSlot < 0 || itemSlot >= Inventory.SIZE) continue;
+			Item item = player.getInventory().get(itemSlot);
+			if(item == null || item.getId() != itemId) continue;
+			// looks valid
+			return t;
+		}
+		return null;
+	}
+	
+	private int[] tryDecode(org.apache.mina.core.buffer.IoBuffer original, int mode) {
+		org.apache.mina.core.buffer.IoBuffer b = original.duplicate();
+		b.rewind();
+		try {
+			int itemId, npcIndex, itemSlot;
+			switch(mode) {
+			case 0:
+				itemId = readLEShortA(b);
+				npcIndex = readLEShort(b);
+				itemSlot = readLEShortA(b);
+				break;
+			case 1:
+				itemId = readShortA(b);
+				npcIndex = readLEShort(b);
+				itemSlot = readShortA(b);
+				break;
+			case 2:
+				itemId = readLEShort(b);
+				npcIndex = readLEShort(b);
+				itemSlot = readLEShort(b);
+				break;
+			case 3:
+				itemId = readShort(b);
+				npcIndex = readLEShort(b);
+				itemSlot = readShort(b);
+				break;
+			default:
+				return null;
+			}
+			return new int[] { itemId, npcIndex, itemSlot };
+		} catch(Exception e) {
+			return null;
+		}
+	}
+	
+	private int readShort(org.apache.mina.core.buffer.IoBuffer b) {
+		return b.getUnsignedShort();
+	}
+	
+	private int readLEShort(org.apache.mina.core.buffer.IoBuffer b) {
+		int i = (b.get() & 0xFF) | ((b.get() & 0xFF) << 8);
+		return i & 0xFFFF;
+	}
+	
+	private int readShortA(org.apache.mina.core.buffer.IoBuffer b) {
+		int i = ((b.get() & 0xFF) << 8) | ((b.get() - 128) & 0xFF);
+		return i & 0xFFFF;
+	}
+	
+	private int readLEShortA(org.apache.mina.core.buffer.IoBuffer b) {
+		int i = ((b.get() - 128) & 0xFF) | ((b.get() & 0xFF) << 8);
+		return i & 0xFFFF;
 	}
 
 }

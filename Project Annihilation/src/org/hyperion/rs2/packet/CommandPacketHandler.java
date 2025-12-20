@@ -177,6 +177,14 @@ public class CommandPacketHandler implements PacketHandler {
 						player.getActionSender().sendMessage("Syntax is ::lvl [skill] [lvl].");
 					}
 				} else if (command.startsWith("switch")) {
+					// Check if player has completed Traiborn's Request quest
+					if (!org.hyperion.rs2.content.quest.impl.TraibornRequest.canSwitchMagic(player)) {
+						player.getActionSender().sendMessage(
+								"You need to complete Traiborn's Request quest to switch magic spellbooks.");
+						player.getActionSender()
+								.sendMessage("Speak to Traiborn in the Wizard's Tower to start the quest.");
+						return;
+					}
 					try {
 						int spellbook = Integer.valueOf(args[1]);
 						switch (spellbook) {
@@ -296,6 +304,14 @@ public class CommandPacketHandler implements PacketHandler {
 					} catch (Exception e) {
 
 					}
+				} else if (command.equals("poson")) {
+					player.setTemporaryAttribute("posDebug", true);
+					player.setTemporaryAttribute("posDebugLast", 0L);
+					player.getActionSender().sendMessage("Position debug: ON");
+					player.getActionSender().sendMessage(player.getLocation().toString());
+				} else if (command.equals("posoff")) {
+					player.setTemporaryAttribute("posDebug", false);
+					player.getActionSender().sendMessage("Position debug: OFF");
 				} else if (command.equals("custommap")) {
 					try {
 						Scanner s = new Scanner(System.in);
@@ -585,7 +601,7 @@ public class CommandPacketHandler implements PacketHandler {
 					}
 				}
 
-				// ::heal — Restores HP, prayer, special attack, and all stats
+				// ::heal — Restores HP, prayer, special attack, all stats, and removes poison
 				else if (command.equals("heal")) {
 					try {
 						// Restore HP to max
@@ -595,16 +611,63 @@ public class CommandPacketHandler implements PacketHandler {
 						player.getPrayer().reset();
 						// Restore special attack to 100%
 						player.getSpecials().setAmount(1000);
+						// Remove poison
+						player.getPoison().setPoisonHit(0);
 						// Restore all stats to their base levels
 						for (int skill = 0; skill < Skills.SKILL_COUNT; skill++) {
 							player.getSkills().setLevel(skill, player.getSkills().getLevelForExperience(skill));
 						}
 						// Update client display
 						player.getActionSender().sendSkills();
-						player.getActionSender().sendMessage("You have been fully healed!");
+						player.getActionSender().sendMessage("You have been fully healed and cured of poison!");
 					} catch (Exception e) {
 						e.printStackTrace();
 						player.getActionSender().sendMessage("Error healing player.");
+					}
+				}
+
+				// ::boost — Admin only: Boosts combat stats and gives unlimited special attack
+				// for 5-10 minutes
+				else if (command.equals("boost")) {
+					if (player.getRights() != Rights.ADMINISTRATOR && !isPrimaryAdmin(player)) {
+						player.getActionSender().sendMessage("You do not have permission to use this command.");
+						return;
+					}
+					try {
+						// Boost combat stats using super potion formula (15% + 5 levels)
+						int[] combatSkills = { Skills.ATTACK, Skills.STRENGTH, Skills.DEFENCE, Skills.RANGE,
+								Skills.MAGIC };
+						for (int skill : combatSkills) {
+							int boost = (int) (5.0
+									+ Math.floor(player.getSkills().getLevelForExperience(skill)) * 0.15);
+							player.getSkills().setLevel(skill, player.getSkills().getLevelForExperience(skill) + boost);
+						}
+
+						// Give unlimited special attack for 7.5 minutes (450000 ms)
+						// We'll refill it every 5 seconds to keep it at 100%
+						final long boostDuration = 450000; // 7.5 minutes
+						final long startTime = System.currentTimeMillis();
+
+						World.getWorld().submit(new Event(5000) { // Check every 5 seconds
+							@Override
+							public void execute() {
+								if (System.currentTimeMillis() - startTime >= boostDuration) {
+									player.getActionSender().sendMessage("Your boost has expired.");
+									this.stop();
+									return;
+								}
+								// Keep special attack at 100%
+								player.getSpecials().setAmount(1000);
+							}
+						});
+
+						// Update client display
+						player.getActionSender().sendSkills();
+						player.getActionSender()
+								.sendMessage("You have been boosted! Unlimited special attack for 7.5 minutes.");
+					} catch (Exception e) {
+						e.printStackTrace();
+						player.getActionSender().sendMessage("Error boosting player.");
 					}
 				}
 

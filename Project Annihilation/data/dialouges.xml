@@ -2851,19 +2851,18 @@
       </dialogue>
 	</dialouges>  
   </dialogueLoader>
-</list>
-<!--- START OF THE TRAIBORN QUEST DIALOGUE -->
-<!--- START OF THE TRAIBORN QUEST DIALOGUE -->
-<dialogueLoader>
+  <dialogueLoader>
     <npcId>881</npcId> <!--Traiborn-->
-	<questId>-1</questId>
+	<questId>29</questId>
 	<dialouges>
 	  <dialogue>
 		<id>0</id>
 		<type>NPC</type>
+		<questStage>-1</questStage>
 		<lines>
 		   <string>Greetings adventurer.</string>
 		   <string>I am Traiborn. I have a small Quest for you.</string>
+		   <string>It's Pretty simple, really, just bring me 20 Feather's.</string>
 		   <string>Would you like to Start this Quest?</string>
 		</lines>
 		<emotion>DEFAULT</emotion>
@@ -2874,6 +2873,7 @@
 	  <dialogue>
 		<id>1</id>
 		<type>OPTION</type>
+		<questStage>-1</questStage>
 		<lines>
 		   <string>Yes please.</string>
 		   <string>No i dont have time for this today.</string>
@@ -2886,6 +2886,7 @@
 	  <dialogue>
 		<id>2</id>
 		<type>PLAYER</type>
+		<questStage>-1</questStage>
 		<lines>
 		   <string>Yes please.</string>
 		</lines>
@@ -2896,18 +2897,21 @@
       </dialogue>
 	  <dialogue>
 		<id>3</id>
-		<type>NPC</type>
+		<type>QUEST</type>
+		<questStage>1</questStage>
 		<lines>
-		   <string>Excellent! I will tell you more about this quest soon.</string>
+		   <string>Excellent! Go to Lumbridge and collect 20 feathers</string>
+		   <string>from the chickens there. Then bring them back to me.</string>
 		</lines>
 		<emotion>HAPPY</emotion>
 		<nextDialougeId>
-			<int>-1</int>
+			<int>-2</int>
 		</nextDialougeId>
       </dialogue>
 	  <dialogue>
 		<id>10</id>
 		<type>PLAYER</type>
+		<questStage>-1</questStage>
 		<lines>
 		   <string>No i dont have time for this today.</string>
 		</lines>
@@ -2919,6 +2923,7 @@
 	  <dialogue>
 		<id>11</id>
 		<type>NPC</type>
+		<questStage>-1</questStage>
 		<lines>
 		   <string>Very well. Come back when you are ready.</string>
 		</lines>
@@ -2927,6 +2932,33 @@
 			<int>-1</int>
 		</nextDialougeId>
       </dialogue>
+	  <dialogue>
+		<id>12</id>
+		<type>NPC</type>
+		<questStage>1</questStage>
+		<lines>
+		   <string>Have you collected the 20 feathers yet?</string>
+		   <string>You can use the feathers on me when you have them.</string>
+		</lines>
+		<emotion>DEFAULT</emotion>
+		<nextDialougeId>
+			<int>-1</int>
+		</nextDialougeId>
+      </dialogue>
+	  <dialogue>
+		<id>13</id>
+		<type>NPC</type>
+		<questStage>3</questStage>
+		<lines>
+		   <string>Thank you for completing my quest!</string>
+		   <string>You can now use the magic switching altars</string>
+		   <string>outside my house to change your spellbook.</string>
+		</lines>
+		<emotion>HAPPY</emotion>
+		<nextDialougeId>
+			<int>-1</int>
+		</nextDialougeId>
+      </dialogue>
     </dialouges>
   </dialogueLoader>
-<!--- END OF THE TRAIBORN QUEST DIALOGUE -->
+</list>
