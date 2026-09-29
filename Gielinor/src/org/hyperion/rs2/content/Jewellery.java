@@ -6,6 +6,7 @@ import org.hyperion.rs2.model.Combat;
 import org.hyperion.rs2.model.Entity;
 import org.hyperion.rs2.model.Graphic;
 import org.hyperion.rs2.model.Location;
+import org.hyperion.rs2.model.Item;
 import org.hyperion.rs2.model.Player;
 import org.hyperion.rs2.model.World;
 import org.hyperion.rs2.model.container.Container;
@@ -49,6 +50,43 @@ public class Jewellery {
 		GAMES_NECKLACE
 	}
 	
+	public static boolean isChargedDuelingRing(int itemId) {
+		return itemId >= 2552 && itemId <= 2566 && itemId % 2 == 0;
+	}
+
+	/**
+	 * Right-click "Restore spec" on a charged ring of dueling.
+	 * Restores special attack to 100% and consumes one charge.
+	 * @return true if this item is a charged ring of dueling (whether or not a charge was used).
+	 */
+	public static boolean restoreSpecial(Player player, int slot, int itemId, boolean operating) {
+		if(!isChargedDuelingRing(itemId)) {
+			return false;
+		}
+		Container con = operating ? player.getEquipment() : player.getInventory();
+		if(slot < 0 || slot >= con.capacity() || con.get(slot) == null || con.get(slot).getId() != itemId) {
+			return true;
+		}
+		if(player.getSpecials().getAmount() >= 1000) {
+			player.getActionSender().sendMessage("Your special attack is already fully charged.");
+			return true;
+		}
+		int nextId = -1;
+		String chargeMessage = "Your ring of dueling crumbles to dust.";
+		for(int i = 0; i < RING_OF_DUELING_DATA.length; i++) {
+			if(((Integer) RING_OF_DUELING_DATA[i][0]).intValue() == itemId) {
+				nextId = ((Integer) RING_OF_DUELING_DATA[i][1]).intValue();
+				chargeMessage = (String) RING_OF_DUELING_DATA[i][2];
+				break;
+			}
+		}
+		con.set(slot, nextId == -1 ? null : new Item(nextId));
+		player.getSpecials().setAmount(1000);
+		player.getActionSender().sendMessage("Your special attack has been restored.");
+		player.getActionSender().sendMessage(chargeMessage);
+		return true;
+	}
+
 	public static boolean rubItem(Player player, int slot, int itemId, boolean operating) {
 		if (!operating || slot == Equipment.SLOT_AMULET) {
 			if(itemId == 1704) {

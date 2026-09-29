@@ -37,6 +37,14 @@ public class Specials {
 	}
 
 	/**
+	 * Gets the special amount (1000 = 100%).
+	 * @return The current special energy.
+	 */
+	public int getAmount() {
+		return amount;
+	}
+
+	/**
 	 * Called every 30 seconds.
 	 */
 	public void tick() {

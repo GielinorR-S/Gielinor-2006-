@@ -30,6 +30,7 @@ import org.hyperion.rs2.model.Location;
 import org.hyperion.rs2.model.NPC;
 import org.hyperion.rs2.model.Player;
 import org.hyperion.rs2.model.World;
+import org.hyperion.rs2.model.container.Equipment;
 import org.hyperion.rs2.model.container.Inventory;
 import org.hyperion.rs2.net.Packet;
 
@@ -42,6 +43,7 @@ public class ItemPacketHandler implements PacketHandler {
 	private static final int DROP_ITEM = 237;
 	private static final int PICKUP_ITEM = 238;
 	private static final int ITEM_RUBBING = 11;
+	private static final int ITEM_OPTION_3 = 91;
 	private static final int ITEM_ON_PLAYER = 30;
 	private static final int ITEM_ON_NPC = 57;
 	
@@ -72,6 +74,9 @@ public class ItemPacketHandler implements PacketHandler {
 			break;
 		case ITEM_RUBBING:
 			handleItemRubbing(player, packet);
+			break;
+		case ITEM_OPTION_3:
+			handleItemOption3(player, packet);
 			break;
 		case ITEM_ON_PLAYER:
 			handleItemOnPlayer(player, packet);
@@ -126,18 +131,32 @@ public class ItemPacketHandler implements PacketHandler {
 		int interfaceSet = packet.getInt();
 		int interfaceId  = interfaceSet >> 16;
 		int itemId = packet.getLEShort() & 0xFFFF;
-		if(slot < 0 || slot >= Inventory.SIZE || player.getInventory().get(slot) == null) {
+		handleJewelleryClick(player, slot, interfaceId, itemId, true);
+	}
+
+	/**
+	 * Inventory option slot 2 (Wear is slot 1, Rub is typically slot 2).
+	 * Opcode 91: itemId as ShortA, interface as Int1, slot as LEShort.
+	 */
+	private void handleItemOption3(Player player, Packet packet) {
+		int itemId = packet.getShortA() & 0xFFFF;
+		int interfaceSet = packet.getInt1();
+		int interfaceId = interfaceSet >> 16;
+		int slot = packet.getLEShort() & 0xFFFF;
+		handleJewelleryClick(player, slot, interfaceId, itemId, false);
+	}
+
+	private void handleJewelleryClick(Player player, int slot, int interfaceId, int itemId, boolean restoreSpecOption) {
+		boolean operating = interfaceId == Equipment.INTERFACE1 || interfaceId == Equipment.INTERFACE2;
+		if(!operating && interfaceId != Inventory.INTERFACE) {
 			return;
 		}
-		if(player.getInventory().get(slot).getId() != itemId) {
-			return;
-		}
-		if(interfaceId == Inventory.INTERFACE) {
-			if(Jewellery.rubItem(player, slot, itemId, false)) {
+		if(restoreSpecOption) {
+			if(Jewellery.restoreSpecial(player, slot, itemId, operating)) {
 				return;
 			}
-		} 
-		
+		}
+		Jewellery.rubItem(player, slot, itemId, operating);
 	}
 
 	private void handlePickupItem(Player player, Packet packet) {
